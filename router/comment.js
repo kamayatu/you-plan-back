@@ -4,23 +4,86 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 
 const prisma = new PrismaClient();
 
-//ログイン中のユーザー情報取得API 削除する
-router.get("/find", isAuthenticated, async (req, res) => {
+//comment登録API
+router.post("/:id", isAuthenticated, async (req, res) => {
+  const postId = parseInt(req.params.id);
+  const { comment } = req.body;
+  if (comment === "") {
+    return;
+  }
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user) {
-      res.status(404).json({ error: "ユーザーが見つかりませんでした。" });
-    }
-    res.status(200).json({ user: { id: user.id, email: user.email, username: user.username } });
+    const newComment = await prisma.comment.create({
+      data: {
+        comment,
+        userId: req.userId,
+        postId,
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+            email: true,
+          },
+        },
+      },
+    });
+    res.json(newComment);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.log(err);
+    res.status(401).json({ message: "権限がありません。" });
   }
 });
 
-//comment登録API
-
 //特定ページのcomment取得API
+router.get("/:id", async (req, res) => {
+  const postId = parseInt(req.params.id);
+  try {
+    const getAllComments = await prisma.comment.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      where: {
+        postId,
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+            email: true,
+          },
+        },
+      },
+    });
+    res.json(getAllComments);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json("サーバーエラーです。");
+  }
+});
 
 //comment削除API
+router.delete("/:id", isAuthenticated, async (req, res) => {
+  const commentId = parseInt(req.params.id);
+  const deleteComment = await prisma.comment.findUnique({
+    where: {
+      id: commentId,
+    },
+  });
+  if (!(req.userId === deleteComment.userId)) {
+    return res.status(401).json({ message: "権限がありません" });
+  }
+
+  try {
+    await prisma.comment.delete({
+      where: {
+        id: commentId,
+      },
+    });
+    res.json(commentId);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json("サーバーエラーです。");
+  }
+});
 
 module.exports = router;

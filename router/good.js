@@ -4,24 +4,6 @@ const isAuthenticated = require("../middlewares/isAuthenticated");
 
 const prisma = new PrismaClient();
 
-//good登録API
-router.post("/:id", isAuthenticated, async (req, res) => {
-  const postId = req.params.id;
-  const numberPostId = parseInt(postId);
-  try {
-    const newGood = await prisma.good.create({
-      data: {
-        userId: req.userId,
-        postId: numberPostId,
-      },
-    });
-    return res.json(newGood);
-  } catch (err) {
-    console.log(err);
-    res.status(401).json({ message: "権限がありません。" });
-  }
-});
-
 //いいねのオンオフ
 router.put("/:id", isAuthenticated, async (req, res) => {
   const includeOb = (arr, targetId) => {
@@ -72,7 +54,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-//プロフィールで特定ユーザーがいいねしてる投稿を全て取得API
+//プロフィール画面で特定ユーザーがいいねしてる投稿を全て取得API
 router.get("/user/:id", async (req, res) => {
   const userId = req.params.id;
   const numberId = parseInt(userId);
@@ -82,6 +64,15 @@ router.get("/user/:id", async (req, res) => {
       where: {
         userId: numberId,
       },
+      include: {
+        post: true,
+        user: {
+          select: {
+            username: true,
+            email: true,
+          },
+        },
+      },
     });
     return res.json(getAllPosts);
   } catch (err) {
@@ -89,17 +80,4 @@ router.get("/user/:id", async (req, res) => {
   }
 });
 
-//お気に入り削除API
-router.delete("/:id", isAuthenticated, async (req, res) => {
-  const postId = req.params.id;
-  const numberPostId = parseInt(postId);
-
-  try {
-    await prisma.good.delete({
-      where: {
-        id: numberPostId,
-      },
-    });
-  } catch (err) {}
-});
 module.exports = router;

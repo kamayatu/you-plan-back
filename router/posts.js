@@ -49,6 +49,22 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "サーバーエラーです" });
   }
 });
+//最新投稿５件取得api
+router.get("/five/5", async (req, res) => {
+  try {
+    const latestPosts = await prisma.post.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: true,
+      },
+    });
+    return res.json(latestPosts);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "サーバーエラーです" });
+  }
+});
 
 //詳細1ページのプラン取得API
 router.get("/:id", async (req, res) => {
