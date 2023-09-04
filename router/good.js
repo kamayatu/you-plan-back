@@ -65,11 +65,18 @@ router.get("/user/:id", async (req, res) => {
         userId: numberId,
       },
       include: {
-        post: true,
-        user: {
+        post: {
           select: {
-            username: true,
-            email: true,
+            id: true,
+            createdAt: true,
+            title: true,
+            content: true,
+            author: {
+              select: {
+                username: true,
+                email: true,
+              },
+            },
           },
         },
       },

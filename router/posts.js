@@ -99,8 +99,17 @@ router.get("/user/:id", async (req, res) => {
       orderBy: {
         createdAt: "desc",
       },
-      include: {
-        author: true,
+      select: {
+        id: true,
+        createdAt: true,
+        title: true,
+        content: true,
+        author: {
+          select: {
+            username: true,
+            email: true,
+          },
+        },
       },
     });
     return res.status(201).json(userPosts);
