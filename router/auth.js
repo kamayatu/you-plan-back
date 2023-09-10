@@ -13,6 +13,15 @@ router.post("/register", async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+  const foundUser = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+  if (foundUser) {
+    return res.status(401).json({ error: "登録済みです。" });
+  }
+
   const user = await prisma.user.create({
     data: {
       username,
